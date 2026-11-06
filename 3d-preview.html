@@ -2,8 +2,8 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Auto Pattern Drafter · Live 3D Fit Preview</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#111b1b;color:#f4f5f1;font:15px system-ui,-apple-system,sans-serif}header{padding:17px 18px 12px;display:flex;justify-content:space-between;gap:12px;align-items:center}h1{font-size:17px;margin:0}small{color:#adc4bc}a{color:#b7e4d7}#stage{height:min(68dvh,740px);min-height:390px;position:relative;background:radial-gradient(ellipse at 50% 30%,#43545b,#182526 75%);touch-action:none}#stage canvas{display:block}#note{position:absolute;left:12px;top:12px;max-width:230px;background:#132524c9;border:1px solid #54776c;border-radius:10px;padding:10px;font-size:12px;pointer-events:none}#err{color:#ffc3c3;padding:12px;display:none}section{padding:16px;max-width:700px;margin:auto}.controls{display:grid;grid-template-columns:1fr 1fr;gap:13px}.control{background:#233534;padding:12px;border-radius:12px}label{display:block;font-size:13px;margin-bottom:8px}input[type=range]{width:100%;accent-color:#9ad9c4}select,button{width:100%;background:#33534c;color:white;border:1px solid #73998d;border-radius:8px;padding:10px}p{line-height:1.5;color:#d3dfd9}.pill{font-size:11px;color:#b2ead8;background:#245244;border-radius:30px;padding:6px 9px;white-space:nowrap}
-</style></head><body><header><div><h1>Auto Pattern Drafter · 3D Studio</h1><small>Interactive technical preview · experimental</small></div><span class="pill">LIVE 3D</span></header><div id="stage"><div id="note">Drag the skirt to tug fabric · drag background to rotate · pinch to zoom<br>Experimental elastic response, not physical cloth simulation</div></div><div id="err"></div>
-<section><div class="controls"><div class="control"><label for="length">Skirt length <output id="lengthValue">0.95</output></label><input id="length" type="range" min=".55" max="1.35" step=".01" value=".95"></div><div class="control"><label for="flare">Skirt flare <output id="flareValue">1.00</output></label><input id="flare" type="range" min=".5" max="1.7" step=".01" value="1"></div><div class="control"><label for="fabric">Fabric color</label><select id="fabric"><option value="#a5b7aa">Sage linen</option><option value="#e8c4ba">Dusty rose</option><option value="#2d303c">Midnight</option><option value="#e9dcc8">Natural cream</option><option value="#6c427d">Amethyst</option></select></div><div class="control"><label for="seams">Construction</label><button id="seams">Show seam guides: on</button></div><div class="control"><label for="turn">View</label><button id="turn">Auto-rotate: off</button></div></div><p><strong>What you're seeing:</strong> a coded 3D mannequin and procedurally generated skirt mesh with real lighting, shading, and adjustable silhouette. This is a <strong>geometry/rendering prototype</strong>, not a photorealistic avatar or a physically simulated garment. It does not yet calculate body measurements, collision, drape, fabric stretch, or sewing-pattern fit. The folds and finger-driven deformation are mathematically modeled with spring-like relaxation, not a validated physical cloth simulation. Seam guides are illustrative, not sewn pattern edges.</p><p><a href="./">← Back to 2D Drafting Studio</a></p></section>
+</style></head><body><header><div><h1>Auto Pattern Drafter · 3D Studio</h1><small>v0.57 · procedural portrait experiment</small></div><span class="pill">v0.57</span></header><div id="stage"><div id="note">Drag the skirt to tug fabric · drag background to rotate · pinch to zoom<br>Experimental elastic response, not physical cloth simulation</div></div><div id="err"></div>
+<section><div class="controls"><div class="control"><label for="length">Skirt length <output id="lengthValue">0.95</output></label><input id="length" type="range" min=".55" max="1.35" step=".01" value=".95"></div><div class="control"><label for="flare">Skirt flare <output id="flareValue">1.00</output></label><input id="flare" type="range" min=".5" max="1.7" step=".01" value="1"></div><div class="control"><label for="fabric">Fabric color</label><select id="fabric"><option value="#a5b7aa">Sage linen</option><option value="#e8c4ba">Dusty rose</option><option value="#2d303c">Midnight</option><option value="#e9dcc8">Natural cream</option><option value="#6c427d">Amethyst</option></select></div><div class="control"><label for="seams">Construction</label><button id="seams">Show seam guides: on</button></div><div class="control"><label for="turn">View</label><button id="turn">Auto-rotate: off</button></div></div><p><strong>What you're seeing:</strong> a procedurally detailed avatar with modeled facial features and hair, plus a generated skirt mesh with real lighting, shading, and adjustable silhouette. This is a <strong>geometry/rendering prototype</strong>, not a photorealistic or scanned human avatar or a physically simulated garment. It does not yet calculate body measurements, collision, drape, fabric stretch, or sewing-pattern fit. The folds and finger-driven deformation are mathematically modeled with spring-like relaxation, not a validated physical cloth simulation. Seam guides are illustrative, not sewn pattern edges.</p><p><a href="./">← Back to 2D Drafting Studio</a></p></section>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js"}}</script><script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
 import {OrbitControls} from 'https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/controls/OrbitControls.js';
@@ -19,7 +19,52 @@ function ellipsoid(x,y,z,sx,sy,sz,mat){const m=new THREE.Mesh(new THREE.SphereGe
 function limb(a,b,r1,r2,mat){const A=new THREE.Vector3(...a),B=new THREE.Vector3(...b),d=new THREE.Vector3().subVectors(B,A),m=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,d.length(),20,1),mat);m.position.copy(A).add(B).multiplyScalar(.5);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());m.castShadow=true;scene.add(m)}
 // Stylized, anatomically proportioned preview mannequin (not a scan).
 ellipsoid(0,2.37,0,.37,.54,.22,topMat);ellipsoid(0,2.06,0,.27,.17,.2,topMat);ellipsoid(0,3.03,0,.12,.17,.12,bodyMat);ellipsoid(0,3.33,0,.20,.265,.19,bodyMat);
-ellipsoid(0,3.13,.173,.105,.095,.055,bodyMat);
+
+/* Procedural portrait detailing: actual scene meshes, not an image overlay.
+   This improves readability, but is NOT a scanned or photoreal human asset. */
+const skin=new THREE.MeshStandardMaterial({color:'#c99679',roughness:.84});
+const lip=new THREE.MeshStandardMaterial({color:'#a65f5b',roughness:.66});
+const hair=new THREE.MeshStandardMaterial({color:'#30221f',roughness:.78});
+const iris=new THREE.MeshStandardMaterial({color:'#4a3429',roughness:.35});
+const white=new THREE.MeshStandardMaterial({color:'#eee0d3',roughness:.42});
+const brow=new THREE.MeshStandardMaterial({color:'#342521',roughness:.92});
+const head=ellipsoid(0,3.33,0,.202,.265,.184,skin);
+ellipsoid(0,3.19,.166,.083,.075,.064,skin); // chin and lower face
+ellipsoid(0,3.315,.184,.043,.072,.055,skin); // nose bridge and tip
+ellipsoid(0,3.275,.222,.059,.025,.039,skin);
+for(const sign of [-1,1]){
+ ellipsoid(sign*.197,3.31,.006,.048,.079,.033,skin); // ears
+ ellipsoid(sign*.084,3.365,.170,.060,.032,.024,white);
+ ellipsoid(sign*.083,3.364,.192,.023,.025,.014,iris);
+ ellipsoid(sign*.079,3.372,.205,.007,.009,.006,white);
+ const eyebrow=ellipsoid(sign*.085,3.423,.174,.073,.012,.018,brow);eyebrow.rotation.z=-sign*.13;
+ ellipsoid(sign*.075,3.297,.178,.072,.033,.017,skin); // cheek contours
+}
+ellipsoid(0,3.227,.184,.075,.012,.025,lip);
+ellipsoid(0,3.216,.181,.063,.008,.02,lip);
+// Hair cap and layered locks: all real geometry casting shadows.
+ellipsoid(0,3.505,-.028,.218,.139,.204,hair);
+for(let i=0;i<18;i++){
+ const a=(i/18)*Math.PI*2,side=Math.cos(a),front=Math.sin(a);
+ const strand=ellipsoid(side*.172,3.27,front*.148-.034,.052,.30,.056,hair);
+ strand.rotation.z=side*.15;
+}
+for(let i=0;i<9;i++){
+ const x=(i-4)*.043;
+ const fringe=ellipsoid(x,3.484,.167,.039,.078,.042,hair);
+ fringe.rotation.z=.22;
+}
+for(const sign of [-1,1]){
+ const lock=ellipsoid(sign*.18,2.98,-.035,.077,.36,.083,hair);
+ lock.rotation.z=sign*.09;
+}
+// Subtle fabric construction on the bodice, independently visible from skirt.
+const stitchMat=new THREE.MeshBasicMaterial({color:'#98887c',transparent:true,opacity:.8});
+function stitchPath(points){const curve=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)));const mesh=new THREE.Mesh(new THREE.TubeGeometry(curve,32,.0035,5,false),stitchMat);scene.add(mesh);return mesh}
+stitchPath([[-.31,2.73,.105],[-.19,2.58,.203],[-.14,2.34,.226],[-.15,2.14,.188]]);
+stitchPath([[.31,2.73,.105],[.19,2.58,.203],[.14,2.34,.226],[.15,2.14,.188]]);
+stitchPath([[-.21,2.16,.187],[0,2.13,.211],[.21,2.16,.187]]);
+
 for(const sign of [-1,1]){ellipsoid(sign*.39,2.76,0,.14,.15,.14,topMat);limb([sign*.43,2.72,0],[sign*.54,2.22,.04],.105,.085,bodyMat);ellipsoid(sign*.54,2.22,.04,.09,.10,.09,bodyMat);limb([sign*.54,2.22,.04],[sign*.53,1.75,.12],.085,.06,bodyMat);ellipsoid(sign*.53,1.67,.12,.07,.15,.055,bodyMat);limb([sign*.145,1.98,0],[sign*.16,1.04,.025],.145,.092,bodyMat);ellipsoid(sign*.16,1.04,.025,.10,.11,.105,bodyMat);limb([sign*.16,1.03,.025],[sign*.17,.18,.08],.085,.056,bodyMat);ellipsoid(sign*.17,.105,.20,.125,.09,.25,shoeMat)}
 const fabricMat=new THREE.MeshStandardMaterial({color:'#a5b7aa',roughness:.94,metalness:0,side:THREE.DoubleSide});
 let skirt,waistband,seamGroup,restPositions,displacements,velocities;const aroundCount=160,verticalCount=55;let showSeams=true,grab=null;function makeSkirt(){if(skirt){scene.remove(skirt);skirt.geometry.dispose()}if(waistband){scene.remove(waistband);waistband.geometry.dispose()}const length=+document.querySelector('#length').value,flare=+document.querySelector('#flare').value;document.querySelector('#lengthValue').textContent=length.toFixed(2);document.querySelector('#flareValue').textContent=flare.toFixed(2);
