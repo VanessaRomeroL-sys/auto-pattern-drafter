@@ -69,12 +69,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-se
 const $=id=>document.getElementById(id);
 const state={tool:'Select',tab:'Properties',focus:false,zoom:100};
 const toolGroups={
+'Garment drafting':['Circle skirt'],
 'Selection & editing':['Select','Move piece','Rotate piece','Mirror','Duplicate','Delete','Align','Group'],
 'Drafting':['Point','Line','Polyline','Rectangle','Circle','Arc','Bezier curve','Spline','Dart'],
 'Pattern construction':['Seam allowance','Notch','Grainline','Fold line','Pleat','Slash & spread','True seam','Walk seams','Offset','Facing'],
 'Measurements':['Measure length','Measure curve','Angle','Tape measure','Dimension','Body measurements'],
 'Grading & production':['Grade point','Grade rule','Sizes','Nest sizes','Piece labels','Cut quantity','Export SVG','Print tiles']};
 const paths={
+'Circle skirt':'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 3v6M12 15v6"/>',
 'Select':'<path d="m4 3 7 18 2.5-7.5L21 11z"/>',
 'Move piece':'<path d="M12 2v20M2 12h20m-13-7 3-3 3 3M9 19l3 3 3-3M5 9l-3 3 3 3m14-6 3 3-3 3"/>',
 'Rotate piece':'<path d="M3 11a9 9 0 1 1 3 7M3 4v7h7"/>',
@@ -112,12 +114,12 @@ const rail=$('rail'),drawer=$('toolDrawer'),svg=$('drawing'),vp=$('viewport'),pi
 let view={scale:1,x:0,y:0},offsets=[{x:0,y:0},{x:0,y:0}],selected=0,pointers=new Map(),gesture=null,drawStart=null,history=[],drafts=document.createElementNS('http://www.w3.org/2000/svg','g');
 drafts.setAttribute('id','drafted-lines');vp.appendChild(drafts);
 function storeFavorites(){try{localStorage.setItem('apd-favorite-tools-v3',JSON.stringify(favorites))}catch(e){}}
-function selectTool(t){state.tool=t;renderRail();renderDrawer();drawPanels();drawer.classList.add('hide')}
+function selectTool(t){if(t==='Circle skirt'){window.openCircleSkirt?.();return}state.tool=t;renderRail();renderDrawer();drawPanels();drawer.classList.add('hide')}
 function renderRail(){rail.innerHTML='<div class="draghandle" id="railHandle" title="Drag toolbar">⠿</div>'+favorites.map(t=>'<button class="tool '+(state.tool===t?'active':'')+'" data-fav="'+t+'" title="'+t+'">'+icon(t)+'<span>'+t.replace('Seam allowance','Seams').replace('Measure length','Measure').replace('Bezier curve','Curve')+'</span></button>').join('')+'<button class="tool" id="openTools" title="All tools">'+icon('Tools')+'<span>All tools</span></button>';
 rail.querySelectorAll('[data-fav]').forEach(b=>b.onclick=()=>selectTool(b.dataset.fav));$('openTools').onclick=toggleDrawer;
 const handle=$('railHandle');handle.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();const rect=rail.getBoundingClientRect(),parent=$('workspace').getBoundingClientRect();const initial={x:rect.left-parent.left,y:rect.top-parent.top,sx:e.clientX,sy:e.clientY};handle.setPointerCapture(e.pointerId);const move=ev=>{const x=Math.max(0,Math.min(parent.width-rail.offsetWidth,initial.x+ev.clientX-initial.sx)),y=Math.max(0,Math.min(parent.height-rail.offsetHeight,initial.y+ev.clientY-initial.sy));rail.classList.add('floating');rail.style.setProperty('--rail-x',x+'px');rail.style.setProperty('--rail-y',y+'px')};const stop=()=>{handle.removeEventListener('pointermove',move);handle.removeEventListener('pointerup',stop);handle.removeEventListener('pointercancel',stop)};handle.addEventListener('pointermove',move);handle.addEventListener('pointerup',stop);handle.addEventListener('pointercancel',stop)})}
-function renderDrawer(){drawer.innerHTML='<button class="close" id="closeDrawer" aria-label="Close tools">×</button><h3>All tools</h3><h4>Garment drafting</h4><div class="toolgrid"><button id="circleSkirtEntry" type="button">✂ <span>Circle skirt · Generate</span></button></div><p class="tip">★ Star tools to add them to your floating toolbar. Tap a tool to select it.</p>'+Object.entries(toolGroups).map(([group,tools])=>'<h4>'+group+'</h4><div class="toolgrid">'+tools.map(t=>'<button class="'+(state.tool===t?'active':'')+'" data-extra="'+t+'">'+icon(t)+'<span>'+t+'</span><span class="star '+(favorites.includes(t)?'on':'')+'" data-star="'+t+'" role="button" aria-label="Toggle favorite '+t+'">'+(favorites.includes(t)?'★':'☆')+'</span></button>').join('')+'</div>').join('');
-$('closeDrawer').onclick=()=>drawer.classList.add('hide');$('circleSkirtEntry').onclick=()=>window.openCircleSkirt?.();drawer.querySelectorAll('[data-extra]').forEach(b=>b.onclick=e=>{const star=e.target.closest('[data-star]');if(star){e.stopPropagation();const t=star.dataset.star;favorites=favorites.includes(t)?favorites.filter(x=>x!==t):[...favorites,t];storeFavorites();renderRail();renderDrawer()}else selectTool(b.dataset.extra)})}
+function renderDrawer(){drawer.innerHTML='<button class="close" id="closeDrawer" aria-label="Close tools">×</button><h3>All tools</h3><p class="tip">★ Star tools to add them to your floating toolbar. Tap a tool to select it.</p>'+Object.entries(toolGroups).map(([group,tools])=>'<h4>'+group+'</h4><div class="toolgrid">'+tools.map(t=>'<button class="'+(state.tool===t?'active':'')+'" data-extra="'+t+'">'+icon(t)+'<span>'+t+'</span><span class="star '+(favorites.includes(t)?'on':'')+'" data-star="'+t+'" role="button" aria-label="Toggle favorite '+t+'">'+(favorites.includes(t)?'★':'☆')+'</span></button>').join('')+'</div>').join('');
+$('closeDrawer').onclick=()=>drawer.classList.add('hide');drawer.querySelectorAll('[data-extra]').forEach(b=>b.onclick=e=>{const star=e.target.closest('[data-star]');if(star){e.stopPropagation();const t=star.dataset.star;favorites=favorites.includes(t)?favorites.filter(x=>x!==t):[...favorites,t];storeFavorites();renderRail();renderDrawer()}else selectTool(b.dataset.extra)})}
 function toggleDrawer(){drawer.classList.toggle('hide');$('sheet').classList.add('hide');renderDrawer()}
 $('toolsMobile').onclick=toggleDrawer;
 function contents(){if(state.tab==='Pieces')return '<p>◉ Front skirt · Cut 1 on fold</p><p>◉ Back skirt · Cut 1 on fold</p><p class="tip">Tap a piece to select, drag to reposition.</p>';if(state.tab==='Layers')return '<p>Pattern outlines</p><p>Seam guides</p><p>Drafted geometry</p>';return '<label>Active tool</label><strong>'+state.tool+'</strong><label>Selected piece</label><strong>'+(selected===0?'Front skirt':'Back skirt')+'</strong><p class="tip">'+(['Line','Lines','Rectangle','Circle','Bezier curve','Curves','Point'].includes(state.tool)?'Draw directly on the canvas. This creates editable preview geometry only.':'This is a layout prototype. Some production tools are not yet implemented.')+'</p>'}
@@ -182,7 +184,7 @@ document.getElementById('save').onclick=()=>{if(el('export'))el('export').click(
 for(const [outer,inner] of [['plus','plus'],['minus','minus'],['fit','reset'],['undo','undo'],['redo','redo']])document.getElementById(outer).addEventListener('click',()=>el(inner)?.click());
 document.getElementById('toolsMobile').addEventListener('click',()=>{});
 const oldToggle=window.toggleDrawer;
-function addSkirtEntry(){const drawer=document.getElementById('toolDrawer');if(drawer.querySelector('#circleSkirtEntry'))return;const section=document.createElement('div');section.innerHTML='<h4>Garment drafting</h4><div class="toolgrid"><button id="circleSkirtEntry">✂ Circle skirt · Generate</button></div>';drawer.prepend(section);section.querySelector('button').onclick=openSkirt}
+function addSkirtEntry(){}
 document.getElementById('openTools')?.addEventListener('click',addSkirtEntry);
 document.getElementById('toolsMobile').addEventListener('click',addSkirtEntry);
 document.addEventListener('click',e=>{if(e.target.closest('#openTools,#toolsMobile'))setTimeout(addSkirtEntry,0)});
